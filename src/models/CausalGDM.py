@@ -31,6 +31,8 @@ class CausalGDM(nn.Module):
     self.W_q_diag = nn.Parameter(torch.zeros(self.n_head, self.d_embed))
     self.W_k_diag = nn.Parameter(torch.zeros(self.n_head, self.d_embed))
 
+    self.e_learned = nn.Parameter(torch.zeros(config.d_embed))
+
     # Dropout
     self.attn_dropout = nn.Dropout(config.dropout)
     self.resid_dropout = nn.Dropout(config.dropout)
@@ -76,6 +78,7 @@ class CausalGDM(nn.Module):
     
     torch.nn.init.normal_(self.W_q_diag, mean=0.0, std=0.02)
     torch.nn.init.normal_(self.W_k_diag, mean=0.0, std=0.02)
+    torch.nn.init.normal_(self.e_learned, mean=0.0, std=0.02)
     
     if self.config.use_ff:
       torch.nn.init.normal_(self.mlp[0].weight, mean=0.0, std=0.02)
@@ -113,8 +116,8 @@ class CausalGDM(nn.Module):
     e = self.ln_e(e)
     p = self.ln_p(p)
 
-    x_i = p[:, :-1, :]
-    x_j = p[:, 1:, :]
+    x_i = p[:, :-1, :] + e
+    x_j = p[:, 1:, :] + self.e_learned
     
     # Kernel
     K = x_i.repeat(1, 1, self.n_head).view(B, S, self.n_head, self.d_embed).transpose(1, 2) # Only use first N positional embeddings for key
