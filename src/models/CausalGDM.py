@@ -26,10 +26,10 @@ class CausalGDM(nn.Module):
     self.ln_f = nn.LayerNorm(config.d_embed, bias=False)
 
     # Kern
-    # self.W_q = nn.Parameter(torch.zeros(self.n_head, self.d_embed, self.d_embed))
-    # self.W_k = nn.Parameter(torch.zeros(self.n_head, self.d_embed, self.d_embed))
-    self.W_q_diag = nn.Parameter(torch.zeros(self.n_head, self.d_embed))
-    self.W_k_diag = nn.Parameter(torch.zeros(self.n_head, self.d_embed))
+    self.W_q = nn.Parameter(torch.zeros(self.n_head, self.d_embed, self.d_embed))
+    self.W_k = nn.Parameter(torch.zeros(self.n_head, self.d_embed, self.d_embed))
+    # self.W_q_diag = nn.Parameter(torch.zeros(self.n_head, self.d_embed))
+    # self.W_k_diag = nn.Parameter(torch.zeros(self.n_head, self.d_embed))
 
     self.e_learned = nn.Parameter(torch.zeros(config.d_embed))
 
@@ -72,12 +72,12 @@ class CausalGDM(nn.Module):
     torch.nn.init.normal_(self.wte.weight, mean=0.0, std=0.02)
     torch.nn.init.normal_(self.wpe.weight, mean=0.0, std=0.02)
     torch.nn.init.normal_(self.W_o.weight, mean=0.0, std=0.02/math.sqrt(2 * self.config.n_layer))
-    # torch.nn.init.normal_(self.W_q, mean=0.0, std=0.02)
-    # torch.nn.init.normal_(self.W_k, mean=0.0, std=0.02)
+    torch.nn.init.normal_(self.W_q, mean=0.0, std=0.02)
+    torch.nn.init.normal_(self.W_k, mean=0.0, std=0.02)
     # torch.nn.init.normal_(self.W_v, mean=0.0, std=0.02)
     
-    torch.nn.init.normal_(self.W_q_diag, mean=0.0, std=0.02)
-    torch.nn.init.normal_(self.W_k_diag, mean=0.0, std=0.02)
+    # torch.nn.init.normal_(self.W_q_diag, mean=0.0, std=0.02)
+    # torch.nn.init.normal_(self.W_k_diag, mean=0.0, std=0.02)
     torch.nn.init.normal_(self.e_learned, mean=0.0, std=0.02)
     
     if self.config.use_ff:
@@ -123,11 +123,14 @@ class CausalGDM(nn.Module):
     K = x_i.repeat(1, 1, self.n_head).view(B, S, self.n_head, self.d_embed).transpose(1, 2) # Only use first N positional embeddings for key
     Q = x_j.repeat(1, 1, self.n_head).view(B, S, self.n_head, self.d_embed).transpose(1, 2) # Use N+1 positional embeddings for query
     
-    W_q = torch.diag_embed(self.W_q_diag)
-    W_k = torch.diag_embed(self.W_k_diag)
+    # W_q = torch.diag_embed(self.W_q_diag)
+    # W_k = torch.diag_embed(self.W_k_diag)
     
-    Q = Q @ W_q
-    K = K @ W_k
+    # Q = Q @ W_q
+    # K = K @ W_k
+    
+    Q = Q @ self.W_q
+    K = K @ self.W_k
     
     mask = torch.tril(torch.ones(S, S, device=e.device), diagonal=0).view(1, S, S)
     # mask = torch.cat([mask, torch.ones(1, 1, S, device=e.device)], dim=1)
