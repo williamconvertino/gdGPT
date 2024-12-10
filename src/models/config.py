@@ -24,10 +24,7 @@ class Config:
 
   use_skip=False
   
-  def __post_init__(self):
-    assert self.model_type in ['GPT', 'GDM', 'PGD', 'CausalGDM', 'CausalGPT']
-    assert self.attn_kernel_fn in ['softmax', 'linear', 'rbf', 'laplacian']
-    self.d_ff = self.d_embed * 4
+  def update_name(self):
     self.name = f'{self.model_type}_{self.d_embed}D_{self.n_head}H_{self.n_layer}L_K={self.attn_kernel_fn}'
     if self.use_ff:
       self.name += '_FF'
@@ -43,3 +40,9 @@ class Config:
       self.name += '_EFF'
     if self.model_type == 'CausalGDM' and self.use_skip:
       self.name += '_SKIP'
+  
+  def __post_init__(self):
+    assert self.model_type in ['GPT', 'GDM', 'PGD', 'CausalGDM', 'CausalGPT']
+    assert self.attn_kernel_fn in ['softmax', 'linear', 'rbf', 'laplacian']
+    self.d_ff = self.d_embed * 4
+    self.update_name()

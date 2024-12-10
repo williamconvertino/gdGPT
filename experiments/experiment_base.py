@@ -98,6 +98,8 @@ CAUSAL_GPT_CONFIG = Config(
   
 def run_experiment(config, seed=0):
   
+  config.update_name()
+  
   torch.manual_seed(seed)
   
   if config.model_type == "GPT":
@@ -110,7 +112,7 @@ def run_experiment(config, seed=0):
     model = CausalGPT(config)
   else:
     raise ValueError("Invalid model type")
-
+  
   tokenizer = TinyStoriesTokenizer()
   train_dataset = TinyStoriesDataset(tokenizer, 'train', context_size=config.context_size)
   val_dataset = TinyStoriesDataset(tokenizer, 'val', context_size=config.context_size)
